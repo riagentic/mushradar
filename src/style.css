@@ -1,0 +1,306 @@
+/* Mushradar — dark cartographic chrome over aio tokens */
+:root {
+  --mr-bg: #070b14;
+  --mr-panel: rgba(14, 20, 34, 0.92);
+  --mr-line: rgba(212, 175, 119, 0.28);
+  --mr-accent: #d4af77;
+  --mr-text: #e8eef8;
+  --mr-muted: #8b97ad;
+  color-scheme: dark; /* native scrollbars + form controls match */
+}
+
+/* aio's themed chrome reserves the 34px title bar as `body { padding-top }`,
+   so #root is 100vh − 34px. Filling with `height: 100%` (never `100vh`, which
+   would overflow by exactly the title bar) keeps the app inside the window and
+   leaves no scrollbar. */
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--mr-bg);
+  color: var(--mr-text);
+  font-family: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid var(--mr-line);
+  background: linear-gradient(180deg, #121a2c, #0b1220);
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 12rem;
+}
+.brand h1 {
+  margin: 0;
+  font-size: 1.15rem;
+  letter-spacing: 0.04em;
+  font-weight: 650;
+}
+.brand-mark {
+  font-size: 1.6rem;
+}
+.tiny {
+  font-size: 0.78rem;
+}
+.muted {
+  color: var(--mr-muted);
+}
+
+.day-nav {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-inline: auto;
+}
+.day-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 7rem;
+}
+
+.lang-switch {
+  display: flex;
+  gap: 0.25rem;
+}
+.lang-switch .chip {
+  width: auto;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+
+.status-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+.pill {
+  font-size: 0.75rem;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--mr-line);
+  background: rgba(255,255,255,0.03);
+}
+
+.main-stage {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 240px 1fr 280px;
+  min-height: 0;
+}
+
+.panel {
+  background: var(--mr-panel);
+  border-right: 1px solid var(--mr-line);
+  padding: 1rem;
+  overflow: auto;
+}
+.detail.panel {
+  border-right: none;
+  border-left: 1px solid var(--mr-line);
+}
+.panel h2 {
+  margin: 0 0 0.6rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--mr-accent);
+}
+.panel section {
+  margin-bottom: 1.25rem;
+}
+
+.chip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 0.4rem;
+}
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  text-align: left;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--mr-text);
+  border-radius: 0.45rem;
+  padding: 0.35rem 0.45rem;
+  cursor: pointer;
+  font: inherit;
+}
+.chip:hover {
+  background: rgba(255,255,255,0.05);
+}
+.chip.on {
+  border-color: var(--mr-line);
+  background: rgba(212, 175, 119, 0.12);
+}
+.swatch {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+  flex: none;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0.35rem 0;
+  font-size: 0.9rem;
+}
+.block {
+  width: 100%;
+  margin-top: 0.45rem;
+}
+
+button.primary,
+button.ghost {
+  font: inherit;
+  border-radius: 0.5rem;
+  padding: 0.45rem 0.75rem;
+  cursor: pointer;
+}
+button.primary {
+  background: var(--mr-accent);
+  color: #1a1208;
+  border: none;
+  font-weight: 600;
+}
+button.ghost {
+  background: transparent;
+  color: var(--mr-text);
+  border: 1px solid var(--mr-line);
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.map-wrap {
+  position: relative;
+  min-height: 0;
+  background: #050814;
+}
+.map-canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+.map-fallback {
+  position: absolute;
+  inset: 40% 15% auto;
+  margin: 0;
+  text-align: center;
+  color: var(--mr-muted);
+}
+.map-canvas:active {
+  cursor: grabbing;
+}
+
+.mush-pic {
+  width: 100%;
+  max-width: 180px;
+  height: auto;
+  margin: 0.5rem auto 0.75rem;
+  display: block;
+  border-radius: 10px;
+}
+
+.wx-now {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.35rem;
+}
+.wx-icon {
+  font-size: 1.8rem;
+}
+.err {
+  color: #ff8a80;
+  font-size: 0.8rem;
+}
+.hint {
+  margin-top: 1rem;
+  line-height: 1.35;
+}
+
+.score-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+}
+.lvl {
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.3rem;
+  background: rgba(255,255,255,0.08);
+}
+.lvl.high {
+  background: rgba(76, 175, 80, 0.25);
+  color: #a5d6a7;
+}
+.lvl.medium {
+  background: rgba(255, 193, 7, 0.2);
+  color: #ffe082;
+}
+.lvl.low {
+  background: rgba(144, 164, 174, 0.25);
+  color: #cfd8dc;
+}
+.lvl.none {
+  opacity: 0.6;
+}
+
+.factors {
+  list-style: none;
+  padding: 0;
+  margin: 0.75rem 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.25rem 0.75rem;
+  font-size: 0.82rem;
+  color: var(--mr-muted);
+}
+
+.empty-detail h2 {
+  color: var(--mr-text);
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 1.1rem;
+}
+
+@media (max-width: 960px) {
+  .main-stage {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto 55vh auto;
+  }
+  .panel {
+    border: none;
+    border-bottom: 1px solid var(--mr-line);
+  }
+}

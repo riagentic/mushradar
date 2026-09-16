@@ -1,44 +1,49 @@
-# mushradar
+# 🍄 Mushradar
 
-An [aio](https://github.com/riagentic/aio) app (counter template).
+**Where to find edible mushrooms in the Czech Republic — today and 14 days
+ahead.** A 3D map of the country scores every forest cell for 11 species from
+forest type, altitude, season and the past 3 weeks of weather plus the forecast.
 
-> **Cloned this repo?** The framework link, `.env`, and `node_modules` are
-> gitignored — run `am fix` once (after installing `am` via the aio install
-> script) to repair them, then `deno task dev` works.
+![Mushradar: 3D map of Czechia with mushroom hotspots, town weather and a species detail card](docs/screenshot.png)
 
-```sh
-deno task dev              # run — browser (flags pass through, see below)
-deno task test             # run the starter test
-deno task compile          # build the default target (browser)
-deno task build            # build every target in deno.json build.targets → dist/
-deno task check            # type-check src/ + tests/, then am check
-```
+## ✨ Features
 
-`deno task dev` runs in the FOREGROUND and dies with the terminal that started
-it. That is right for a person and wrong for an agent, whose every command is a
-fresh short-lived shell — one report lost its app about eight times in a session
-before finding the answer. `deno task am start` is the supervised background
-form: it takes a lock, waits for health, and `am stop` / `am status` / `am logs`
-address it afterwards.
+- 🗺️ 3D terrain with forests, rivers, lakes and 100+ towns showing live weather
+- 🍄 11 species (porcini, chanterelle, parasol…), hotspots sized by score
+- 📅 Day picker (`←` `→`): today + 14 days, confidence falls with distance
+- 🔎 Click a mushroom → score, the 6 factors behind it, and an illustration
+- 📍 Your location from your IP address · 🇨🇿/🇬🇧 Czech and English UI
+- 🌦️ Weather: [Open-Meteo](https://open-meteo.com) · 📡 radar:
+  [RainViewer](https://www.rainviewer.com) · no API keys
 
-The app's version is `major.minor` in deno.json (`"version": "0.1"`) — the build
-number is derived from the commit count, so every artifact is named
-`mushradar-0.1.<build>…` and reports that version (`-dirty.<hash>` when built
-from uncommitted changes).
+## 🚀 Run
 
-**`dev` flags pass through** — one task, any shell:
+Needs [Deno](https://deno.com) ≥ 2.9 and [aio](https://github.com/riagentic/aio)
+(`am`). After cloning, run `am fix` once.
 
 ```sh
-deno task dev --client=electron     # desktop window (auto-installs Electron)
-deno task dev --client=cli          # terminal client
-deno task dev --client=server-only  # headless server
-deno task dev --expose              # reachable on the LAN (prints pair PIN)
+deno task dev            # desktop app (Electron); --client=browser for a tab
+deno task test           # tests · deno task check · deno task lint
+deno task build          # dist/: AppImage + browser binary
 ```
 
-**Ship more targets** by listing them in deno.json —
-`"build": { "targets": ["browser", "electron", "android"] }` — then
-`deno task build` (or one-off: `deno task build --targets=electron`). Run
-`deno task build --list` for every target name.
+## 🧠 How it works
 
-State lives in `src/cell.ts`, UI in `src/App.tsx`, entry in `src/app.ts`. Manage
-a running app with `deno task am` (status, state, logs, …).
+| Part     | Where                                                                     |
+| -------- | ------------------------------------------------------------------------- |
+| Model    | `src/model/predict.ts`: habitat × season × temp × moisture × frost × wind |
+| Weather  | `src/cell/weather.ts`: refetches when data is 3 h old (quota-safe)        |
+| Map + UI | `src/ui/Map3D.tsx` (Three.js) · `src/App.tsx`                             |
+| Data     | `src/data/`: terrain + forest grid, species, towns, rivers, lakes         |
+
+> ⚠️ A forecast, not a guarantee. Only pick mushrooms you know for sure.
+
+## 📜 License
+
+[MIT](LICENSE). Data: weather and elevation ©
+[Open-Meteo](https://open-meteo.com) (CC BY 4.0) · radar ©
+[RainViewer](https://www.rainviewer.com) · tree cover ©
+Hansen/UMD/Google/USGS/NASA via
+[Global Forest Watch](https://www.globalforestwatch.org) (CC BY 4.0) · border ©
+[OpenStreetMap](https://www.openstreetmap.org/copyright) contributors (ODbL) ·
+IP location by [ip-api.com](https://ip-api.com) (free for non-commercial use).

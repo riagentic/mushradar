@@ -1,12 +1,26 @@
-// Entry — near-zero-config: cells self-register on import; appId/version/
-// baseDir are inferred from deno.json + this file's location.
-//
-// `theme: "auto"` is the one opt-in: aio's default look (typography, colour
-// in light AND dark, controls, cards — accented from this app's own name)
-// until you write `src/style.css`, at which point it steps aside and leaves
-// only the `--aio-*` variables. Delete the line and the app renders with the
-// browser's own defaults; `"full"` keeps the look alongside your own CSS.
-import "./cell.ts";
+// Entry — cells self-register on import; boot fetches location + weather + radar.
 import { aio } from "aio";
+import { geo, radar, weather } from "./cell.ts";
 
-await aio.run({ ui: { theme: "auto" } });
+// aio-ok: a local single-user app — every client may see every key.
+await aio.run({
+  appId: "mushradar", // data lives in ~/.mushradar — never rename
+  ui: {
+    theme: "full",
+    title: "Mushradar",
+    chrome: "themed",
+    width: 1400,
+    height: 900,
+  },
+  // Hourly checks; weather.refresh() itself skips data younger than STALE_MS,
+  // so a restart or a tick never spends Open-Meteo quota on fresh data.
+  schedules: [
+    { id: "wx-hourly", every: 3_600_000, action: weather.refresh.action() },
+    { id: "radar-hourly", every: 3_600_000, action: radar.refresh.action() },
+  ],
+  onStart: () => {
+    void weather.refresh();
+    void radar.refresh();
+    void geo.locate();
+  },
+});
