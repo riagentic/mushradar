@@ -1,7 +1,7 @@
 {
-  "aioVersion": "v1.0.2-beta",
+  "aioVersion": "v1.0.5-beta",
   "title": "Mushradar",
-  "version": "0.1",
+  "version": "0.2",
   "client": "electron",
   "build": {
     "targets": [
@@ -52,7 +52,7 @@
     "aio/feedback": "./dep/aio/src/feedback.ts",
     "aio/build": "./dep/aio/src/build.ts",
     "aio/ship": "./dep/aio/src/build/ship.ts",
-    "electron": "npm:electron@^44.3.0",
+    "electron": "npm:electron@44.4.1",
     "esbuild": "npm:esbuild@0.24.2",
     "immer": "npm:immer@10.2.0",
     "happy-dom": "npm:happy-dom@17.6.3",

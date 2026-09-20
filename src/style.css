@@ -209,12 +209,19 @@ button:disabled {
   touch-action: none;
   cursor: grab;
 }
-.map-fallback {
+.render-badge {
   position: absolute;
-  inset: 40% 15% auto;
-  margin: 0;
-  text-align: center;
-  color: var(--mr-muted);
+  top: 10px;
+  right: 10px;
+  padding: 3px 8px;
+  border: 1px solid var(--mr-accent);
+  border-radius: 999px;
+  background: var(--mr-panel);
+  color: var(--mr-accent);
+  font-size: 11px;
+  font-weight: 600;
+  pointer-events: auto;
+  cursor: help;
 }
 .map-canvas:active {
   cursor: grabbing;

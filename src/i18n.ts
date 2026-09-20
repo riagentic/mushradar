@@ -57,7 +57,10 @@ export type Messages = {
   mapAlt: string;
   language: string;
   updated: string;
-  noWebGl: string;
+  renderSoftware: string;
+  renderSoftwareHint: string;
+  renderFlat: string;
+  renderFlatHint: string;
   wmo: Record<WmoKey, string>;
   level: Record<Level, string>;
 };
@@ -114,8 +117,12 @@ const MESSAGES: Record<Lang, Messages> = {
     mapAlt: "Czech mushroom map",
     language: "Language",
     updated: "Updated",
-    noWebGl:
-      "The 3D map needs WebGL, which this window cannot create. Enable hardware acceleration or try another browser.",
+    renderSoftware: "SW rendering",
+    renderSoftwareHint:
+      "No graphics card available — the 3D map is drawn by the CPU and may be slow.",
+    renderFlat: "SW rendering · 2D",
+    renderFlatHint:
+      "3D graphics (WebGL) are not available here, so a flat 2D map is shown instead.",
     wmo: {
       clear: "Clear",
       partlyCloudy: "Partly cloudy",
@@ -186,8 +193,12 @@ const MESSAGES: Record<Lang, Messages> = {
     mapAlt: "Mapa hub v Česku",
     language: "Jazyk",
     updated: "Aktualizováno",
-    noWebGl:
-      "3D mapa potřebuje WebGL, které toto okno nedokáže vytvořit. Zapněte hardwarovou akceleraci nebo zkuste jiný prohlížeč.",
+    renderSoftware: "SW vykreslování",
+    renderSoftwareHint:
+      "Grafická karta není k dispozici — 3D mapu kreslí procesor a může být pomalá.",
+    renderFlat: "SW vykreslování · 2D",
+    renderFlatHint:
+      "3D grafika (WebGL) tu není k dispozici, proto se zobrazuje plochá 2D mapa.",
     wmo: {
       clear: "Jasno",
       partlyCloudy: "Polojasno",

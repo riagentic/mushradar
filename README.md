@@ -1,4 +1,4 @@
-# 🍄 Mushradar
+# 🍄 Mushradar (alpha)
 
 **Where to find edible mushrooms in the Czech Republic — today and 14 days
 ahead.** A 3D map of the country scores every forest cell for 11 species from

@@ -134,7 +134,7 @@ const smoothCourse = (
 };
 
 /** Course in world space, tributary mouths already snapped to their parent. */
-const resolveCourses = (): Map<string, { p: P; t: number }[]> => {
+export const resolveCourses = (): Map<string, { p: P; t: number }[]> => {
   const byId = new Map<string, River>();
   for (const r of RIVERS) byId.set(r.id, r);
 

@@ -27,6 +27,8 @@ import {
 import { buildForest } from "./forest3d.ts";
 import { buildRivers } from "./rivers3d.ts";
 import { buildLakes } from "./lakes3d.ts";
+import Map2D from "./Map2D.tsx";
+import { isSoftwareRenderer, type RenderMode } from "./map2d.ts";
 
 /** Bottom of the solid slab the country is extruded down to (world Y).
  *  Measured, not guessed: the lowest terrain sample, so the skirt stops at the
@@ -259,7 +261,7 @@ const sampleAlt = (lon: number, lat: number): number => {
 
 export default function Map3D(): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null!);
-  const [noGl, setNoGl] = useLocal(false);
+  const [mode, setMode] = useLocal<RenderMode>("gpu");
   const api = useRef<{
     renderer?: THREE.WebGLRenderer;
     scene?: THREE.Scene;
@@ -348,10 +350,19 @@ export default function Map3D(): JSX.Element {
         stencil: true,
       });
     } catch {
-      // No GPU context (blocked, headless, driver): say so, not a black box.
-      setNoGl(true);
+      // No WebGL at all (a macOS VM: no Metal, so not even SwiftShader).
+      // Fall back to the flat 2D map instead of an empty box.
+      setMode("flat");
       return;
     }
+    // A CPU rasteriser behind WebGL works but is slow — label it, so a tester
+    // knows which path they are looking at.
+    const gl = renderer.getContext();
+    const dbg = gl.getExtension("WEBGL_debug_renderer_info");
+    const glName = String(
+      gl.getParameter(dbg ? dbg.UNMASKED_RENDERER_WEBGL : gl.RENDERER) ?? "",
+    );
+    if (isSoftwareRenderer(glName)) setMode("software");
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
     renderer.setClearColor(0x0b1020, 1);
     renderer.shadowMap.enabled = true;
@@ -715,13 +726,23 @@ export default function Map3D(): JSX.Element {
   const m = messages(view.lang);
   return (
     <>
-      {noGl && <p class="map-fallback" t="map-fallback">{m.noWebGl}</p>}
-      <canvas
-        ref={canvasRef}
-        t="map"
-        class="map-canvas"
-        aria-label={m.mapAlt}
-      />
+      {mode === "flat" ? <Map2D /> : (
+        <canvas
+          ref={canvasRef}
+          t="map"
+          class="map-canvas"
+          aria-label={m.mapAlt}
+        />
+      )}
+      {mode !== "gpu" && (
+        <span
+          class="render-badge"
+          t="render-mode"
+          title={mode === "flat" ? m.renderFlatHint : m.renderSoftwareHint}
+        >
+          {mode === "flat" ? m.renderFlat : m.renderSoftware}
+        </span>
+      )}
     </>
   );
 }
