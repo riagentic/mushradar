@@ -4,6 +4,7 @@ import {
   homeKey,
   MANUAL_MIN_AGE_MS,
   migrateWeather,
+  STALE_MS,
   weather,
 } from "../src/cell/weather.ts";
 import {
@@ -111,10 +112,13 @@ Deno.test("open-meteo: the request covers exactly the window the app reads", () 
   const url = new URL(buildUrl([{ id: "a", name: "A", lat: 50, lon: 14 }]));
   assertEquals(url.searchParams.get("past_days"), String(PAST_DAYS));
   assertEquals(url.searchParams.get("forecast_days"), String(FORECAST_DAYS));
-  // Quota: one location must stay under 4 API-call units.
+  // Quota: every point, every STALE_MS, a day long, keeps under 60 % of
+  // Open-Meteo's free 10 000 calls/day.
   const vars = url.searchParams.get("daily")!.split(",").length +
     url.searchParams.get("current")!.split(",").length;
-  assert((vars / 10) * ((PAST_DAYS + FORECAST_DAYS) / 14) < 4);
+  const perPoint = (vars / 10) * ((PAST_DAYS + FORECAST_DAYS) / 14);
+  const perDay = (TOWNS.length + 1) * perPoint * (86_400_000 / STALE_MS);
+  assert(perDay < 6_000, `${Math.round(perDay)} calls/day`);
 });
 
 Deno.test("weather: stored v1 and v2 slices migrate to the v3 shape", () => {

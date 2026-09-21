@@ -2,6 +2,7 @@
 import type { Level } from "./model/predict.ts";
 import type { WmoKey } from "./model/weather.ts";
 import type { Species } from "./data/species.ts";
+import type { Compass } from "./model/terrain.ts";
 
 export type Lang = "cz" | "en";
 
@@ -46,10 +47,19 @@ export type Messages = {
   hint: string;
   conf: string;
   factors: Record<
-    "habitat" | "season" | "temp" | "moist" | "frost" | "wind",
+    | "habitat"
+    | "season"
+    | "temp"
+    | "moist"
+    | "air"
+    | "night"
+    | "frost"
+    | "wind",
     string
   >;
   cell: string;
+  /** "SW slope" — the side of the hills a cell sits on */
+  slope: (dir: Compass) => string;
   close: string;
   noReading: string;
   pickMushroom: string;
@@ -105,10 +115,13 @@ const MESSAGES: Record<Lang, Messages> = {
       season: "season",
       temp: "temp",
       moist: "moisture",
+      air: "air humidity",
+      night: "nights",
       frost: "frost",
       wind: "wind",
     },
     cell: "Cell #",
+    slope: (dir) => `${dir} slope`,
     close: "Close",
     noReading: "No station reading yet.",
     pickMushroom: "Pick a mushroom",
@@ -181,10 +194,25 @@ const MESSAGES: Record<Lang, Messages> = {
       season: "sezóna",
       temp: "teplota",
       moist: "vlhkost",
+      air: "vlhkost vzduchu",
+      night: "noci",
       frost: "mráz",
       wind: "vítr",
     },
     cell: "Buňka #",
+    slope: (dir) =>
+      `svah ${
+        ({
+          N: "S",
+          NE: "SV",
+          E: "V",
+          SE: "JV",
+          S: "J",
+          SW: "JZ",
+          W: "Z",
+          NW: "SZ",
+        })[dir]
+      }`,
     close: "Zavřít",
     noReading: "Stanice zatím nemá data.",
     pickMushroom: "Vyberte houbu",

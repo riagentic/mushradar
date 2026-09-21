@@ -6,6 +6,7 @@ import { geo, radar, view, weather } from "./cell.ts";
 import { MANUAL_MIN_AGE_MS } from "./cell/weather.ts";
 import { MAX_DAY_OFFSET, prettyDate, todayIso } from "./model/time.ts";
 import { WMO_ICON, wmoKey } from "./model/weather.ts";
+import { compass } from "./model/terrain.ts";
 import { dateLocale, messages, speciesInfo, speciesName } from "./i18n.ts";
 import { dayIso, hotspotAt, seriesIndexForDay } from "./ui/scores.ts";
 import Map3D from "./ui/Map3D.tsx";
@@ -286,6 +287,14 @@ export default function App(): JSX.Element {
                     {Math.round(picked.score.factors.moist * 100)}%
                   </li>
                   <li>
+                    {m.factors.air}{" "}
+                    {Math.round(picked.score.factors.air * 100)}%
+                  </li>
+                  <li>
+                    {m.factors.night}{" "}
+                    {Math.round(picked.score.factors.night * 100)}%
+                  </li>
+                  <li>
                     {m.factors.frost}{" "}
                     {Math.round(picked.score.factors.frost * 100)}%
                   </li>
@@ -297,9 +306,12 @@ export default function App(): JSX.Element {
                 <p>{speciesInfo(picked.species, lang)}</p>
                 <p class="muted tiny">
                   {m.cell}
-                  {picked.index} · {picked.alt} m · {picked.lat.toFixed(3)}N
+                  {picked.index} · {picked.alt} m
+                  {compass(picked.terrain)
+                    ? ` · ${m.slope(compass(picked.terrain)!)}`
+                    : ""} · {picked.lat.toFixed(3)}N {picked.lon.toFixed(3)}E ·
                   {" "}
-                  {picked.lon.toFixed(3)}E · {fmtDay(iso)}
+                  {fmtDay(iso)}
                 </p>
                 <button
                   type="button"

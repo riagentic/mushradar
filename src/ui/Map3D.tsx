@@ -4,8 +4,9 @@ import { onCleanup, onGlobalKey, onMount, useLocal, useRef } from "aio/air";
 import { THREE } from "./three.ts";
 import { CZ_BORDER, ELEVATION, FOREST, GRID } from "../data/grid.ts";
 import { geo, view, weather } from "../cell.ts";
-import { computeHotspots, type Hotspot } from "./scores.ts";
+import { computeHotspots, type Hotspot, placeHotspots } from "./scores.ts";
 import { messages } from "../i18n.ts";
+import { todayIso } from "../model/time.ts";
 import { buildMushroom } from "./mushroomMesh.ts";
 import {
   altToY,
@@ -461,11 +462,14 @@ export default function Map3D(): JSX.Element {
     };
     applyOrbit();
 
-    const rebuildMushrooms = () => {
-      const stations = weather.stations;
-      const day = view.day;
-      const filter = view.species;
-      const spots = computeHotspots(stations, day, filter);
+    // The key carries today's date: past midnight "today" is a new day even
+    // when nothing else changed.
+    const mushKey = (today: string) =>
+      `${today}|${view.day}|${view.species}|${weather.stations.length}|${weather.fetchedAt}`;
+    const rebuildMushrooms = (today: string) => {
+      const spots = computeHotspots(weather.stations, view.day, view.species, {
+        today,
+      });
       st.hotspots = spots;
       while (mushRoot.children.length) {
         const c = mushRoot.children[0];
@@ -479,11 +483,17 @@ export default function Map3D(): JSX.Element {
           }
         });
       }
-      for (const h of spots) {
+      for (const p of placeHotspots(spots)) {
+        const { plotLon: lon, plotLat: lat, ...h } = p;
         const scale = (0.35 + h.score.score * 0.7) * 0.9375; // −50% vs prior
         const m = buildMushroom(h.species, scale);
-        const y = altToY(h.alt) + 0.05;
-        m.position.set(lonToX(h.lon), y, latToZ(h.lat));
+        // Off-centre markers stand on the terrain surface, not the node height.
+        const ground = sampleBilinear(
+          ELEVATION,
+          (lon - GRID.lon0) / (GRID.lon1 - GRID.lon0) * (GRID.cols - 1),
+          (lat - GRID.lat0) / (GRID.lat1 - GRID.lat0) * (GRID.rows - 1),
+        );
+        m.position.set(lonToX(lon), altToY(ground) + 0.05, latToZ(lat));
         m.userData = {
           kind: "mush",
           index: h.index,
@@ -494,16 +504,15 @@ export default function Map3D(): JSX.Element {
         m.rotation.y = (h.index % 17) * 0.37;
         mushRoot.add(m);
       }
-      st.lastKey = `${day}|${filter}|${stations.length}|${weather.fetchedAt}`;
+      st.lastKey = mushKey(today);
     };
 
     let raf = 0;
     const tick = () => {
       raf = requestAnimationFrame(tick);
       // live cell reads
-      const key =
-        `${view.day}|${view.species}|${weather.stations.length}|${weather.fetchedAt}`;
-      if (key !== st.lastKey) rebuildMushrooms();
+      const today = todayIso();
+      if (mushKey(today) !== st.lastKey) rebuildMushrooms(today);
 
       townRoot.visible = view.showTowns;
       mushRoot.visible = view.showMushrooms;
@@ -530,7 +539,7 @@ export default function Map3D(): JSX.Element {
       applyOrbit();
       renderer.render(scene, camera);
     };
-    rebuildMushrooms();
+    rebuildMushrooms(todayIso());
     tick();
 
     const onWheel = (e: WheelEvent) => {

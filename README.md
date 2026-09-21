@@ -11,7 +11,7 @@ forest type, altitude, season and the past 3 weeks of weather plus the forecast.
 - 🗺️ 3D terrain with forests, rivers, lakes and 100+ towns showing live weather
 - 🍄 11 species (porcini, chanterelle, parasol…), hotspots sized by score
 - 📅 Day picker (`←` `→`): today + 14 days, confidence falls with distance
-- 🔎 Click a mushroom → score, the 6 factors behind it, and an illustration
+- 🔎 Click a mushroom → score, the 8 factors behind it, and an illustration
 - 📍 Your location from your IP address · 🇨🇿/🇬🇧 Czech and English UI
 - 🌦️ Weather: [Open-Meteo](https://open-meteo.com) · 📡 radar:
   [RainViewer](https://www.rainviewer.com) · no API keys
@@ -29,12 +29,13 @@ deno task build          # dist/: AppImage + browser binary
 
 ## 🧠 How it works
 
-| Part     | Where                                                                     |
-| -------- | ------------------------------------------------------------------------- |
-| Model    | `src/model/predict.ts`: habitat × season × temp × moisture × frost × wind |
-| Weather  | `src/cell/weather.ts`: refetches when data is 3 h old (quota-safe)        |
-| Map + UI | `src/ui/Map3D.tsx` (Three.js) · `src/App.tsx`                             |
-| Data     | `src/data/`: terrain + forest grid, species, towns, rivers, lakes         |
+| Part     | Where                                                                                                |
+| -------- | ---------------------------------------------------------------------------------------------------- |
+| Model    | `src/model/predict.ts`: habitat × season × temp × moisture × air × night × frost × wind              |
+| Terrain  | `src/model/terrain.ts`: slope, aspect, valley/ridge + canopy insulation (heat, cold, humidity, wind) |
+| Weather  | `src/cell/weather.ts`: refetches when data is 3 h old (quota-safe)                                   |
+| Map + UI | `src/ui/Map3D.tsx` (Three.js) · `src/App.tsx`                                                        |
+| Data     | `src/data/`: terrain + forest grid, species, towns, rivers, lakes                                    |
 
 > ⚠️ A forecast, not a guarantee. Only pick mushrooms you know for sure.
 

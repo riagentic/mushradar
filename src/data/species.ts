@@ -16,10 +16,15 @@ export type Species = {
   temp: readonly [number, number, number, number];
   /** rain needed (mm) inside the lag window for a full flush */
   rainNeed: number;
-  /** fruiting lag after rain (days): window [from, to] */
+  /** fruiting lag after rain (days at the optimum-mid temperature; slower
+   *  when colder, faster when warmer): window [from, to] */
   lag: readonly [number, number];
   /** night minimum below which the flush is killed (°C) */
   frost: number;
+  /** canopy over the fruiting spot, 0 open meadow … 1 closed forest */
+  cover: number;
+  /** 3-night mean minimum (°C) from which cold nights stop slowing growth */
+  night: number;
   /** season as day-of-year window, soft ±15 days */
   season: readonly [number, number];
   /** topsoil moisture (m³/m³) mapping 0 → 1 */
@@ -52,6 +57,8 @@ export const SPECIES: readonly Species[] = [
     rainNeed: 25,
     lag: [6, 14],
     frost: -2,
+    night: 8,
+    cover: 1,
     season: [166, 304],
     soil: [0.17, 0.3],
     info:
@@ -82,6 +89,8 @@ export const SPECIES: readonly Species[] = [
     rainNeed: 20,
     lag: [5, 12],
     frost: 0,
+    night: 11,
+    cover: 1,
     season: [140, 275],
     soil: [0.15, 0.28],
     info:
@@ -112,6 +121,8 @@ export const SPECIES: readonly Species[] = [
     rainNeed: 22,
     lag: [5, 12],
     frost: -2,
+    night: 7,
+    cover: 1,
     season: [150, 300],
     soil: [0.17, 0.3],
     info:
@@ -136,12 +147,16 @@ export const SPECIES: readonly Species[] = [
     cz: "Křemenáč osikový",
     latin: "Leccinum aurantiacum",
     en: "Orange oak bolete",
-    forest: { spruce: 0.4, pine: 0.5, beech: 0.45, oak: 0.8 },
-    alt: [200, 800],
+    // Aspen partner (no aspen layer: it rides on spruce/pine clearings);
+    // an upland species on acid soil, rare in the warm lowlands.
+    forest: { spruce: 0.55, pine: 0.45, beech: 0.3, oak: 0.35 },
+    alt: [350, 950],
     temp: [8, 12, 20, 25],
     rainNeed: 20,
     lag: [5, 12],
     frost: -2,
+    night: 7,
+    cover: 0.6,
     season: [160, 295],
     soil: [0.16, 0.29],
     info:
@@ -172,6 +187,8 @@ export const SPECIES: readonly Species[] = [
     rainNeed: 18,
     lag: [4, 11],
     frost: -2,
+    night: 6,
+    cover: 0.6,
     season: [160, 300],
     soil: [0.16, 0.29],
     info:
@@ -202,6 +219,8 @@ export const SPECIES: readonly Species[] = [
     rainNeed: 30,
     lag: [8, 16],
     frost: -1,
+    night: 9,
+    cover: 1,
     season: [170, 290],
     soil: [0.18, 0.31],
     info:
@@ -232,6 +251,8 @@ export const SPECIES: readonly Species[] = [
     rainNeed: 15,
     lag: [4, 10],
     frost: -1,
+    night: 8,
+    cover: 0.3,
     season: [185, 300],
     soil: [0.14, 0.27],
     info:
@@ -262,6 +283,8 @@ export const SPECIES: readonly Species[] = [
     rainNeed: 15,
     lag: [3, 10],
     frost: -3,
+    night: 5,
+    cover: 0.7,
     season: [190, 315],
     soil: [0.14, 0.27],
     info:
@@ -292,6 +315,8 @@ export const SPECIES: readonly Species[] = [
     rainNeed: 20,
     lag: [5, 12],
     frost: -3,
+    night: 3,
+    cover: 1,
     season: [244, 320],
     soil: [0.17, 0.3],
     info:
@@ -322,6 +347,8 @@ export const SPECIES: readonly Species[] = [
     rainNeed: 20,
     lag: [7, 15],
     frost: -4,
+    night: 2,
+    cover: 1,
     season: [225, 325],
     soil: [0.17, 0.3],
     info:
@@ -352,6 +379,8 @@ export const SPECIES: readonly Species[] = [
     rainNeed: 18,
     lag: [5, 12],
     frost: -3,
+    night: 4,
+    cover: 0.6,
     season: [215, 305],
     soil: [0.15, 0.28],
     info:

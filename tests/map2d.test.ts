@@ -11,6 +11,13 @@ import {
   unproject,
   zoomAt,
 } from "../src/ui/map2d.ts";
+import {
+  clusterOffset,
+  computeHotspots,
+  placeHotspots,
+} from "../src/ui/scores.ts";
+import { todayIso } from "../src/model/time.ts";
+import { station } from "./fixtures.ts";
 
 const v = homeView(800, 500);
 
@@ -79,4 +86,42 @@ Deno.test("map2d: software WebGL renderers are recognised", () => {
       "ANGLE (NVIDIA, NVIDIA GeForce RTX 4070 Direct3D11 vs_5_0 ps_5_0, D3D11)",
     ]
   ) assert(!isSoftwareRenderer(s), s);
+});
+
+Deno.test("markers sharing a cell spread apart, stay inside it, and are stable", () => {
+  const today = todayIso();
+  const stations = [
+    station("praha", 50.08, 14.44),
+    station("brno", 49.2, 16.61),
+    station("budejovice", 48.97, 14.47),
+  ];
+  const spots = computeHotspots(stations, 1, "", { today });
+  const placed = placeHotspots(spots);
+  assertEquals(placed.length, spots.length);
+  const cellW = (GRID.lon1 - GRID.lon0) / (GRID.cols - 1);
+  const cellH = (GRID.lat1 - GRID.lat0) / (GRID.rows - 1);
+  const byCell = Map.groupBy(placed, (p) => p.index);
+  assert(
+    [...byCell.values()].some((g) => g.length > 1),
+    "fixture has shared cells",
+  );
+  for (const g of byCell.values()) {
+    const keys = new Set(g.map((p) => `${p.plotLon},${p.plotLat}`));
+    assertEquals(keys.size, g.length, "no two markers on one point");
+    for (const p of g) {
+      assert(Math.abs(p.plotLon - p.lon) < cellW / 2);
+      assert(Math.abs(p.plotLat - p.lat) < cellH / 2);
+      if (g.length === 1) assertEquals([p.plotLon, p.plotLat], [p.lon, p.lat]);
+    }
+  }
+  assertEquals(placeHotspots(spots), placed, "same input, same layout");
+});
+
+Deno.test("cluster layout: centre for one, ring for a few, best-in-centre for many", () => {
+  assertEquals(clusterOffset(1, 0, 3), [0, 0]);
+  const two = [clusterOffset(2, 0, 3), clusterOffset(2, 1, 3)];
+  assertAlmostEquals(two[0][0], -two[1][0]);
+  assertAlmostEquals(two[0][1], -two[1][1]);
+  assertEquals(clusterOffset(6, 0, 3), [0, 0]);
+  assertAlmostEquals(Math.hypot(...clusterOffset(6, 2, 3)), 0.42);
 });

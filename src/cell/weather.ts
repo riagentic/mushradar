@@ -7,8 +7,8 @@ import type { Station } from "../model/weather.ts";
 export type Home = { lat: number; lon: number; label: string };
 type Io = typeof import("../server/openmeteo.server.ts");
 
-/** Data younger than this is fresh: ~8 fetches a day stay far inside
- *  Open-Meteo's free 10 000 calls/day (one fetch ≈ 400 calls). */
+/** Data younger than this is fresh: ~8 fetches a day stay inside
+ *  Open-Meteo's free 10 000 calls/day (one fetch ≈ 520 calls). */
 export const STALE_MS = 3 * 3_600_000;
 /** The floor for a manual refresh — a button must not burn the quota. */
 export const MANUAL_MIN_AGE_MS = 10 * 60_000;

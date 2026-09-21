@@ -68,9 +68,16 @@ export const nearestWeights = (
 };
 
 const LAPSE = 0.0065; // °C per metre
+/** Orographic rain: Czech uplands gain ~6 % precipitation per 100 m. */
+const RAIN_PER_M = 0.0006;
+
+/** Rain multiplier for a point `dz` metres above its station. */
+export const orographic = (dz: number): number =>
+  Math.min(1.8, Math.max(0.6, 1 + RAIN_PER_M * dz));
 
 /** Blend station series into one series at `alt` metres. Temperatures get a
- *  lapse-rate correction; rain, wind, soil are weighted averages. */
+ *  lapse-rate correction, rain an orographic one; wind, rh, soil are
+ *  weighted averages. */
 export const blendSeries = (
   stations: readonly Station[],
   weights: readonly Weight[],
@@ -97,6 +104,7 @@ export const blendSeries = (
     const d = st.daily;
     if (!d) continue;
     const dt = -LAPSE * (alt - st.elev);
+    const rf = orographic(alt - st.elev);
     if (w > codeW) {
       codeW = w;
       out.code = d.code.slice(0, n);
@@ -105,7 +113,7 @@ export const blendSeries = (
       out.tmax[t] += w * ((d.tmax[t] ?? 0) + dt);
       out.tmin[t] += w * ((d.tmin[t] ?? 0) + dt);
       out.tmean[t] += w * ((d.tmean[t] ?? 0) + dt);
-      out.rain[t] += w * (d.rain[t] ?? 0);
+      out.rain[t] += w * rf * (d.rain[t] ?? 0);
       out.wind[t] += w * (d.wind[t] ?? 0);
       out.rh[t] += w * (d.rh[t] ?? 0);
       out.soil[t] += w * (d.soil[t] ?? 0);

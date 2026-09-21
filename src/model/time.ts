@@ -1,14 +1,26 @@
 // Calendar helpers — pure, timezone passed in so tests are deterministic.
 export const MAX_DAY_OFFSET = 14;
 
+const fmts = new Map<string, Intl.DateTimeFormat>();
+/** One formatter per zone: building one costs far more than using it, and
+ *  the maps ask for today's date every frame. */
+const dayFmt = (tz: string): Intl.DateTimeFormat => {
+  let f = fmts.get(tz);
+  if (!f) {
+    f = new Intl.DateTimeFormat("en-CA", {
+      timeZone: tz,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    fmts.set(tz, f);
+  }
+  return f;
+};
+
 /** ISO date (YYYY-MM-DD) of `ms` in Prague. */
 export const isoDate = (ms: number, tz = "Europe/Prague"): string =>
-  new Intl.DateTimeFormat("en-CA", {
-    timeZone: tz,
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date(ms));
+  dayFmt(tz).format(new Date(ms));
 
 /** Today's ISO date in Prague, from the wall clock. */
 export const todayIso = (tz = "Europe/Prague"): string =>

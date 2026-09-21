@@ -4,8 +4,9 @@ import { MAX_DAY_OFFSET } from "../model/time.ts";
 
 export type Point = { id: string; name: string; lat: number; lon: number };
 
-/** History the model reads: the longest rain lag (16 d) + 4 d of margin. */
-export const PAST_DAYS = 20;
+/** History the model reads: the longest rain lag (16 growth-days) stretches
+ *  to ~28 calendar days in cool weather (growthRate ≈ 0.57 at 8 °C below). */
+export const PAST_DAYS = 30;
 /** Today + every offset the day picker can reach. */
 export const FORECAST_DAYS = MAX_DAY_OFFSET + 1;
 

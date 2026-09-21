@@ -1,5 +1,5 @@
-import { assert, assertEquals } from "@std/assert";
-import { level, seasonFactor } from "../src/model/predict.ts";
+import { assert, assertAlmostEquals, assertEquals } from "@std/assert";
+import { level, seasonFactor, weatherFactors } from "../src/model/predict.ts";
 import { SPECIES } from "../src/data/species.ts";
 import { CZ_BORDER, CZ_MASK, GRID } from "../src/data/grid.ts";
 import { addDays, todayIso } from "../src/model/time.ts";
@@ -126,4 +126,33 @@ Deno.test("season factor peaks in window", () => {
   const peak = seasonFactor(sp, iso);
   const winter = seasonFactor(sp, "2024-01-15");
   assertEquals(peak > winter, true);
+});
+
+Deno.test("cold nights cut the score even when the daily mean is fine", () => {
+  const sp = SPECIES.find((s) => s.id === "hrib-smrkovy")!;
+  const d = station("x", 50, 15).daily!;
+  const t = 20;
+  const mild = weatherFactors(sp, d, t);
+  // Same 14 °C mean, but 23 °C days and 5 °C nights.
+  const cold = weatherFactors(sp, { ...d, tmin: d.tmin.map(() => 5) }, t);
+  assertEquals(mild.night, 1);
+  assertEquals(cold.temp, mild.temp);
+  assert(cold.night < 0.8 && cold.night > 0.2, `night ${cold.night}`);
+  assertEquals(cold.frost, 1);
+});
+
+Deno.test("frost kills the flush smoothly, only from the species limit", () => {
+  const sp = SPECIES.find((s) => s.id === "hrib-smrkovy")!;
+  const d = station("x", 50, 15).daily!;
+  const at = (v: number) =>
+    weatherFactors(
+      sp,
+      { ...d, tmin: d.tmin.map((x, i) => i === 19 ? v : x) },
+      20,
+    )
+      .frost;
+  assertAlmostEquals(at(sp.frost), 0.1);
+  assertAlmostEquals(at(sp.frost - 5), 0.1);
+  assertEquals(at(sp.frost + 3), 1);
+  assert(at(sp.frost + 1) < at(sp.frost + 2), "monotonic, no steps");
 });

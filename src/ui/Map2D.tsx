@@ -9,7 +9,8 @@ import { TOWNS } from "../data/towns.ts";
 import { RIVERS } from "../data/rivers.ts";
 import { geo, view, weather } from "../cell.ts";
 import { messages } from "../i18n.ts";
-import { computeHotspots, type Hotspot } from "./scores.ts";
+import { todayIso } from "../model/time.ts";
+import { computeHotspots, type Placed, placeHotspots } from "./scores.ts";
 import { elevColor, xToLon, zToLat } from "./mapMath.ts";
 import { THREE } from "./three.ts";
 import { resolveCourses } from "./rivers3d.ts";
@@ -61,7 +62,7 @@ const riverCourses = () => {
 const draw = (
   ctx: CanvasRenderingContext2D,
   v: View2D,
-  spots: readonly Hotspot[],
+  spots: readonly Placed[],
 ): void => {
   const P = (lon: number, lat: number) => project(v, lon, lat);
   ctx.fillStyle = "#0b1020";
@@ -158,7 +159,7 @@ const draw = (
     ctx.lineWidth = 1;
     // Weakest first, so the best spots sit on top.
     for (const h of [...spots].reverse()) {
-      const [x, y] = P(h.lon, h.lat);
+      const [x, y] = P(h.plotLon, h.plotLat);
       ctx.fillStyle = h.species.look.capColor;
       ctx.beginPath();
       ctx.arc(x, y, 3 + h.score.score * 5, 0, Math.PI * 2);
@@ -189,7 +190,7 @@ export default function Map2D(): JSX.Element {
     if (!canvas || !ctx) return;
 
     let v = homeView(1, 1);
-    let spots: Hotspot[] = [];
+    let spots: Placed[] = [];
     let spotsKey = "";
     let drawnKey = "";
     let drag: { x: number; y: number; moved: number } | null = null;
@@ -214,10 +215,14 @@ export default function Map2D(): JSX.Element {
     let raf = 0;
     const tick = () => {
       raf = requestAnimationFrame(tick);
+      // Today's date is in the key: past midnight "today" is a new day.
+      const today = todayIso();
       const sk =
-        `${view.day}|${view.species}|${weather.stations.length}|${weather.fetchedAt}`;
+        `${today}|${view.day}|${view.species}|${weather.stations.length}|${weather.fetchedAt}`;
       if (sk !== spotsKey) {
-        spots = computeHotspots(weather.stations, view.day, view.species);
+        spots = placeHotspots(
+          computeHotspots(weather.stations, view.day, view.species, { today }),
+        );
         spotsKey = sk;
       }
       const key = [
@@ -271,7 +276,12 @@ export default function Map2D(): JSX.Element {
       const [x, y] = local(e);
       const at = (lon: number, lat: number) => project(v, lon, lat);
       if (view.showMushrooms) {
-        const i = nearest(spots.map((h) => at(h.lon, h.lat)), x, y, PICK_PX);
+        const i = nearest(
+          spots.map((h) => at(h.plotLon, h.plotLat)),
+          x,
+          y,
+          PICK_PX,
+        );
         if (i >= 0) return view.pickCell(spots[i].index, spots[i].species.id);
       }
       if (view.showTowns) {
