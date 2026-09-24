@@ -1,7 +1,7 @@
 {
-  "aioVersion": "v1.0.5-beta",
+  "aioVersion": "v1.0.10-beta",
   "title": "Mushradar",
-  "version": "0.3",
+  "version": "0.4",
   "client": "electron",
   "build": {
     "targets": [
@@ -72,6 +72,7 @@
     "fmt": "deno fmt",
     "lint": "deno lint src/ && deno run -A ./dep/aio/aiol/mod.ts",
     "doctor": "deno run -A ./dep/aio/src/server/doctor.ts",
-    "am": "deno run -A ./dep/aio/src/am.ts"
+    "am": "deno run -A ./dep/aio/src/am.ts",
+    "install:electron": "deno run -A ./dep/aio/src/electron-install.ts"
   }
 }

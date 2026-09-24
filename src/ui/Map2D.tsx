@@ -243,7 +243,8 @@ export default function Map2D(): JSX.Element {
       drawnKey = key;
       draw(ctx, v, spots);
     };
-    tick();
+    // First frame via rAF: cell reads belong to the loop, never to onMount.
+    raf = requestAnimationFrame(tick);
 
     const local = (e: MouseEvent): [number, number] => {
       const r = canvas.getBoundingClientRect();

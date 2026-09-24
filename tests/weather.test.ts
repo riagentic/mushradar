@@ -1,9 +1,12 @@
 import { assert, assertEquals } from "@std/assert";
+import { until } from "aio";
 import { bootCells, testCell } from "aio/testing";
 import {
   homeKey,
+  isMinuteLimit,
   MANUAL_MIN_AGE_MS,
   migrateWeather,
+  MINUTE_RETRY_MS,
   STALE_MS,
   weather,
 } from "../src/cell/weather.ts";
@@ -50,16 +53,69 @@ Deno.test("weather: a new home makes fresh data stale and adds its station", asy
   await weather.setHome(49.2, 16.6, "Brno");
   await h.advance(50);
   assertEquals(calls.length, 2);
-  assertEquals(calls[1][0].id, "home");
+  assertEquals(
+    calls[1].map((p) => p.id),
+    ["home"],
+    "fresh towns not refetched",
+  );
+  assertEquals(weather.stations.length, TOWNS.length + 1);
   assertEquals(weather.homeStation()?.name, "Brno");
   assertEquals(
     weather.fetchedFor,
     homeKey({ lat: 49.2, lon: 16.6, label: "" }),
   );
   // The same home again (every boot re-locates) costs nothing.
-  await weather.setHome(49.2, 16.6, "Brno");
+  await weather.setHome(49.2, 16.6, "Brno-město");
   await h.advance(50);
   assertEquals(calls.length, 2);
+  assertEquals(weather.home?.label, "Brno-město");
+});
+
+Deno.test("weather: a boot relocate never aborts the running fetch", async () => {
+  const calls: Point[][] = [];
+  let release = () => {};
+  const gate = new Promise<void>((r) => release = r);
+  const io = {
+    fetchStations: async (pts: readonly Point[]) => {
+      calls.push([...pts]);
+      if (calls.length === 1) await gate;
+      return pts.map((p) => ({ ...station(p.id, p.lat, p.lon), name: p.name }));
+    },
+  };
+  await using h = await bootCells([weather], { stub: { [IO]: io } });
+  const boot = weather.refresh();
+  await until(() => calls.length === 1, { timeoutMs: 2000 }); // in flight
+  await weather.setHome(49.2, 16.6, "Brno");
+  await h.advance(50);
+  release();
+  assertEquals(await boot, true, "the boot fetch completes");
+  await until(() => calls.length === 2 && !weather.busy, { timeoutMs: 2000 });
+  assertEquals(calls[0].length, TOWNS.length, "boot: towns only");
+  assertEquals(calls[1].map((p) => p.id), ["home"], "then: home only");
+  assertEquals(weather.fetchedFor, homeKey(weather.home));
+  assertEquals(weather.error, "");
+});
+
+Deno.test("weather: the per-minute cap retries after a minute", async () => {
+  let fail = "open-meteo: Minutely API request limit exceeded.";
+  const calls: Point[][] = [];
+  const io = {
+    fetchStations: (pts: readonly Point[]) => {
+      calls.push([...pts]);
+      return fail ? Promise.reject(new Error(fail)) : Promise.resolve(
+        pts.map((p) => ({ ...station(p.id, p.lat, p.lon), name: p.name })),
+      );
+    },
+  };
+  await using h = await bootCells([weather], { stub: { [IO]: io } });
+  assertEquals(await weather.refresh(), false);
+  fail = "";
+  await h.advance(MINUTE_RETRY_MS);
+  await until(() => calls.length === 2 && !weather.busy);
+  assertEquals(weather.stations.length, TOWNS.length);
+  assertEquals(weather.error, "");
+  assert(isMinuteLimit("Minutely API request limit exceeded"));
+  assert(!isMinuteLimit("Daily API request limit exceeded"), "daily: no retry");
 });
 
 Deno.test("weather: a failed fetch keeps the last good batch", async () => {

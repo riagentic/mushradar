@@ -14,7 +14,7 @@ if (!Deno.env.get("AIO_ELECTRON_ARGS")) {
 await aio.run({
   appId: "mushradar", // data lives in ~/.mushradar — never rename
   ui: {
-    theme: "full",
+    theme: "auto", // the look lives in src/aio-theme.css (am theme adopt)
     title: "Mushradar",
     chrome: "themed",
     width: 1400,

@@ -260,6 +260,10 @@ const sampleAlt = (lon: number, lat: number): number => {
   return ELEVATION[idx] ?? 300;
 };
 
+/** How long a lost WebGL context may take to come back before the flat map
+ *  takes over. */
+const CONTEXT_RESTORE_MS = 3_000;
+
 export default function Map3D(): JSX.Element {
   const canvasRef = useRef<HTMLCanvasElement>(null!);
   const [mode, setMode] = useLocal<RenderMode>("gpu");
@@ -297,6 +301,7 @@ export default function Map3D(): JSX.Element {
     };
     orbit: { az: number; pol: number; dist: number; target: THREE.Vector3 };
     lastKey: string;
+    townKey: string;
   }>({
     hotspots: [],
     raycaster: new THREE.Raycaster(),
@@ -321,6 +326,7 @@ export default function Map3D(): JSX.Element {
       target: new THREE.Vector3(0, 1.5, 0),
     },
     lastKey: "",
+    townKey: "",
   });
 
   onGlobalKey("ArrowRight", (e) => {
@@ -415,7 +421,6 @@ export default function Map3D(): JSX.Element {
     const townBoards = buildTownBillboards();
     for (const b of townBoards) townRoot.add(b.group);
     scene.add(townRoot);
-    refreshTownWeather(townBoards, weather.stations, view.day);
 
     const home = new THREE.Mesh(
       new THREE.SphereGeometry(0.22, 16, 16),
@@ -522,9 +527,9 @@ export default function Map3D(): JSX.Element {
       if (st.townBoards) {
         const tk =
           `${view.day}|${weather.fetchedAt}|${weather.stations.length}`;
-        if ((st as { townKey?: string }).townKey !== tk) {
+        if (st.townKey !== tk) {
           refreshTownWeather(st.townBoards, weather.stations, view.day);
-          (st as { townKey?: string }).townKey = tk;
+          st.townKey = tk;
         }
       }
       if (geo.lat && geo.lon) {
@@ -539,8 +544,9 @@ export default function Map3D(): JSX.Element {
       applyOrbit();
       renderer.render(scene, camera);
     };
-    rebuildMushrooms(todayIso());
-    tick();
+    // First frame via rAF, not inline: every live cell read belongs to the
+    // frame loop (its keys trigger the first build), never to onMount.
+    raf = requestAnimationFrame(tick);
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
@@ -710,8 +716,22 @@ export default function Map3D(): JSX.Element {
     canvas.addEventListener("auxclick", onAux);
     canvas.addEventListener("mousedown", onAux);
 
+    // A lost context (GPU reset, a starved software rasteriser) is restored
+    // by three. One that stays lost would leave a blank box: go flat instead.
+    let lostTimer: ReturnType<typeof setTimeout> | undefined;
+    const onLost = () => {
+      clearTimeout(lostTimer);
+      lostTimer = setTimeout(() => setMode("flat"), CONTEXT_RESTORE_MS);
+    };
+    const onRestored = () => clearTimeout(lostTimer);
+    canvas.addEventListener("webglcontextlost", onLost);
+    canvas.addEventListener("webglcontextrestored", onRestored);
+
     onCleanup(() => {
       cancelAnimationFrame(raf);
+      clearTimeout(lostTimer);
+      canvas.removeEventListener("webglcontextlost", onLost);
+      canvas.removeEventListener("webglcontextrestored", onRestored);
       ro.disconnect();
       canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("pointerdown", onDown);
